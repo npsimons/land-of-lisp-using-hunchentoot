@@ -70,3 +70,54 @@
 
 (defun inventory ()
   (cons 'items- (objects-at 'body *objects* *object-locations*)))
+
+(defun game-repl ()
+  (let ((command (game-read)))
+    (unless (eq (car command) 'quit)
+      (game-print (game-eval command))
+      (game-repl))))
+
+(defun game-read ()
+  (let ((command (read-from-string
+              (concatenate 'string "(" (read-line) ")"))))
+    (flet ((quote-it (x)
+             (list 'quote x)))
+      (cons (car command) (mapcar #'quote-it (cdr command))))))
+
+(defparameter *allowed-commands* '(look walk pickup inventory))
+
+(defun game-eval (sexp)
+  (if (member (car sexp) *allowed-commands*)
+      (eval sexp)
+      '(i do not know that command.)))
+
+(defun tweak-text (list capitalize literally)
+  (when list
+    (let ((item (car list))
+          (rest (cdr list)))
+      (cond
+        ((eql item #\space)
+         (cons item (tweak-text rest capitalize literally)))
+        ((member item '(#\! #\? #\.))
+         (cons item (tweak-text rest t literally)))
+        ((eql item #\")
+         (tweak-text rest capitalize (not literally)))
+        (literally
+         (cons item (tweak-text rest nil literally)))
+        (capitalize
+         (cons (char-upcase item) (tweak-text rest nil literally)))
+        (t
+         (cons (char-downcase item) (tweak-text rest nil nil)))))))
+
+(defun game-print (list)
+  (princ
+   (coerce
+    (tweak-text
+     (coerce
+      (string-trim "() "
+                   (prin1-to-string list))
+      'list)
+     t
+     nil)
+    'string))
+  (fresh-line))
