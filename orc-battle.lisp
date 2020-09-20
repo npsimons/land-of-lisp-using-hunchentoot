@@ -81,7 +81,7 @@
                   (<= monster-number *monster-num*)))
         (progn (princ "That is not a valid monster number.")
                (pick-monster))
-        (let ((monster (aref *monsters* (1- x))))
+        (let ((monster (aref *monsters* (1- monster-number))))
           (if (monster-dead monster)
               (progn (princ "That monster is already dead.")
                      (pick-monster))
@@ -96,7 +96,7 @@
              (make-array *monster-num*))))
 
 (defun monster-dead (monster)
-  (<= (monster-health monster-health) 0))
+  (<= (monster-health monster) 0))
 
 (defun monsters-dead ()
   (every #'monster-dead *monsters*))
@@ -118,6 +118,7 @@
                       (princ ") ")
                       (monster-show monster))))
          *monsters*)))
+
 (defstruct monster (health (randval 10)))
 
 (defmethod monster-hit (monster damage)
@@ -133,7 +134,7 @@
              (princ " health points! "))))
 
 (defmethod monster-show (monster)
-  (princ "A fierc ")
+  (princ "A fierce ")
   (princ (type-of monster)))
 
 (defmethod monster-attack (monster))
@@ -166,8 +167,8 @@
 (defmethod monster-hit ((monster hydra) damage)
   (decf (monster-health monster) damage)
   (if (monster-dead monster)
-      (princ "The corpse of the fully decapitated and decapacitated hydra")
-      (princ " falls to the floor!")
+      (progn (princ "The corpse of the fully decapitated and decapacitated hydra")
+             (princ " falls to the floor!"))
       (progn (princ "You lop off ")
              (princ damage)
              (princ " of the hydra's heads! "))))
@@ -179,3 +180,42 @@
     (princ " of its heads! It also grows back one more head! ")
     (incf (monster-health monster))
     (decf *player-health* damage)))
+
+(defstruct (slime-mold (:include monster))
+  (sliminess (randval 5)))
+
+(push #'make-slime-mold *monster-builders*)
+
+(defmethod monster-show ((monster slime-mold))
+  (princ "A slime mold with a sliminess of ")
+  (princ (slime-mold-sliminess monster)))
+
+(defmethod monster-attack ((monster slime-mold))
+  (let ((damage (randval (slime-mold-sliminess monster))))
+    (princ "A slime mold wraps around your legs and decreases your agility by ")
+    (princ damage)
+    (princ "! ")
+    (decf *player-agility* damage)
+    (when (zerop (random 2))
+      (princ "It also squirts in your face, taking away a health point! ")
+      (decf *player-health*))))
+
+(defstruct (brigand (:include monster)))
+
+(push #'make-brigand *monster-builders*)
+
+(defmethod monster-attack ((monster brigand))
+  (let ((attribute (max *player-health* *player-agility* *player-strength*)))
+    (cond
+      ((= attribute *player-health*)
+       (princ "A brigand hits you with his slingshot,")
+       (princ " taking off 2 health points! ")
+       (decf *player-health* 2))
+      ((= attribute *player-agility*)
+       (princ "A brigand catches your leg with his whip,")
+       (princ " taking off 2 agility points! ")
+       (decf *player-agility* 2))
+      ((= attribute *player-strength*)
+       (princ "A brigand cuts your arm with his whip,")
+       (princ " taking off 2 strength points! ")
+       (decf *player-strength* 2)))))
