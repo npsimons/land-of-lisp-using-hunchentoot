@@ -100,3 +100,29 @@
   (dot->png filename
             (lambda ()
               (ugraph->dot nodes edges))))
+
+(define-condition foo () ()
+           (:report (lambda (condition stream)
+                      (princ "Stop FOOing around, numbskull!" stream))))
+
+(error 'foo)
+
+(handler-case (bad-function)
+           (foo () "Somebody signaled foo!")
+           (bar () "Somebody signaled bar!"))
+
+(unwind-protect (/ 1 0)
+  (princ "I need to 'flubyduby' no matter what."))
+
+;; The clean, functional part
+(defun add-widget (database widget)
+  (cons widget database))
+
+;; The dirty, nonfunctional part
+(defparameter *database* nil)
+
+(defun main-loop ()
+  (loop
+     (princ "Please enter the name of a new widget: ")
+     (setf *database* (add-widget *database* (read)))
+     (format t "The database contains the following: ~a~%" *database*)))
