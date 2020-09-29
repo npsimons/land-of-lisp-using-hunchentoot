@@ -1,6 +1,6 @@
 (defparameter *number-of-players* 2)
 (defparameter *maximum-dice-per-space* 3)
-(defparameter *board-length* 2)
+(defparameter *board-length* 3)
 (defparameter *board-hex-count* (* *board-length* *board-length*))
 
 (defun board-array (list)
@@ -163,7 +163,7 @@
 
 (defun handle-computer (tree)
   (let ((ratings (get-ratings tree (car tree))))
-    (card (nth (position (apply #'max ratings) ratings) (caddr tree)))))
+    (cadr (nth (position (apply #'max ratings) ratings) (caddr tree)))))
 
 (defun play-versus-computer (tree)
   (print-info tree)

@@ -126,3 +126,14 @@
      (princ "Please enter the name of a new widget: ")
      (setf *database* (add-widget *database* (read)))
      (format t "The database contains the following: ~a~%" *database*)))
+
+(defparameter *foo* (let ((x 5))
+                      (lambda ()
+                        x)))
+
+(let ((line-number 0))
+  (defun my-print (x)
+    (print line-number)
+    (print x)
+    (incf line-number)
+    nil))
