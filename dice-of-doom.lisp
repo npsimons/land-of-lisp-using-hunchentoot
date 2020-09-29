@@ -34,6 +34,12 @@
                           first-move
                           (attacking-moves board player spare-dice))))
 
+(let ((old-game-tree (symbol-function 'game-tree))
+      (previous (make-hash-table :test #'equalp)))
+  (defun game-tree (&rest rest)
+    (or (gethash rest previous)
+        (setf (gethash rest previous) (apply old-game-tree rest)))))
+
 (defun add-passing-move (board player spare-dice first-move moves)
   (if first-move
       moves
@@ -77,6 +83,12 @@
                              (list (1+ position) (1+ down))))
        when (and (>= p 0) (< p *board-hex-count*))
          collect p)))
+
+(let ((old-neighbors (symbol-function 'neighbors))
+      (previous (make-hash-table)))
+  (defun neighbors (position)
+    (or (gethash position previous)
+        (setf (gethash position previous) (funcall old-neighbors position)))))
 
 (defun board-attack (board player source destination dice)
   (board-array (loop for position from 0
@@ -155,6 +167,16 @@
           (if (member player w)
               (/ 1 (length w))
               0)))))
+
+(let ((old-rate-position (symbol-function 'rate-position))
+      (previous (make-hash-table)))
+  (defun rate-position (tree player)
+    (let ((table (gethash player previous)))
+      (unless table
+        (setf table (setf (gethash player previous) (make-hash-table))))
+      (or (gethash tree table)
+          (setf (gethash tree table)
+                (funcall old-rate-position tree player))))))
 
 (defun get-ratings (tree player)
   (mapcar (lambda (move)

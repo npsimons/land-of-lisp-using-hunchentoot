@@ -1,3 +1,6 @@
+;; Only works in CLisp; need to find different socket library for others
+;; like SBCL.
+
 (defun http-char (first-character second-character &optional (default #\Space))
   (let ((code (parse-integer
                (coerce (list first-character second-character) 'string)
