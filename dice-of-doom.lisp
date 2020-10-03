@@ -34,12 +34,15 @@
                           first-move
                           (attacking-moves board player spare-dice))))
 
-;XXX: Seems to be broken.
-;; (let ((old-game-tree (symbol-function 'game-tree))
-;;       (previous (make-hash-table :test #'equalp)))
-;;   (defun game-tree (&rest rest)
-;;     (or (gethash rest previous)
-;;         (setf (gethash rest previous) (apply old-game-tree rest)))))
+(compile 'game-tree)
+
+(let ((old-game-tree (symbol-function 'game-tree))
+      (previous (make-hash-table :test #'equalp)))
+  (defun game-tree (&rest rest)
+    (or (gethash rest previous)
+        (setf (gethash rest previous) (apply old-game-tree rest)))))
+
+(compile 'game-tree)
 
 (defun add-passing-move (board player spare-dice first-move moves)
   (if first-move
@@ -85,12 +88,15 @@
        when (and (>= p 0) (< p *board-hex-count*))
          collect p)))
 
-;XXX: Seems to be broken.
-;; (let ((old-neighbors (symbol-function 'neighbors))
-;;       (previous (make-hash-table)))
-;;   (defun neighbors (position)
-;;     (or (gethash position previous)
-;;         (setf (gethash position previous) (funcall old-neighbors position)))))
+(compile 'neighbors)
+
+(let ((old-neighbors (symbol-function 'neighbors))
+      (previous (make-hash-table)))
+  (defun neighbors (position)
+    (or (gethash position previous)
+        (setf (gethash position previous) (funcall old-neighbors position)))))
+
+(compile 'neighbors)
 
 (defun board-attack (board player source destination dice)
   (board-array (loop for position from 0
@@ -127,6 +133,8 @@
                                (cons (list current-player (1+ curent-dice)) accumulator))
                             (f (cdr list) n (cons (car list) accumulator))))))))
     (board-array (f (coerce board 'list) spare-dice ()))))
+
+(compile 'add-new-dice)
 
 (defun play-versus-human (tree)
   (print-info tree)
@@ -185,16 +193,19 @@
               (/ 1 (length w))
               0)))))
 
-;XXX: Seems to be broken.
-;; (let ((old-rate-position (symbol-function 'rate-position))
-;;       (previous (make-hash-table)))
-;;   (defun rate-position (tree player)
-;;     (let ((table (gethash player previous)))
-;;       (unless table
-;;         (setf table (setf (gethash player previous) (make-hash-table))))
-;;       (or (gethash tree table)
-;;           (setf (gethash tree table)
-;;                 (funcall old-rate-position tree player))))))
+(compile 'rate-position)
+
+(let ((old-rate-position (symbol-function 'rate-position))
+      (previous (make-hash-table)))
+  (defun rate-position (tree player)
+    (let ((table (gethash player previous)))
+      (unless table
+        (setf table (setf (gethash player previous) (make-hash-table))))
+      (or (gethash tree table)
+          (setf (gethash tree table)
+                (funcall old-rate-position tree player))))))
+
+(compile 'rate-position)
 
 (defun get-ratings (tree player)
   (mapcar (lambda (move)

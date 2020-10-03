@@ -41,3 +41,53 @@
 (compile 'my-length)
 
 (defparameter *biglist* (loop for i below 100000 collect 'x))
+
+(defun add (a b)
+  (let ((x (+ a b)))
+    (format t "The sum is ~a" x)
+    x))
+
+(defmacro let1 (variable value &body body)
+  `(let ((,variable ,value))
+     ,@body))
+
+(defun add (a b)
+  (let1 x (+ a b)
+    (format t "The sum is ~a" x)
+    x))
+
+;; This function is finally safe to use.
+(defmacro split (value yes no)
+  (let1 g (gensym)
+    `(let1 ,g ,value
+       (if ,g
+           (let ((head (car ,g))
+                 (tail (cdr ,g)))
+             ,yes)
+           ,no))))
+
+(defun my-length (list)
+  (labels ((f (list accumulator)
+             (split list
+                    (f tail (1+ accumulator))
+                    accumulator)))
+    (f list 0)))
+
+(defmacro recurse (variables &body body)
+  (let1 p (pairs variables)
+    `(labels ((self ,(mapcar #'car p)
+                ,@body))
+       (self ,@(mapcar #'cdr p)))))
+
+(defun my-length (list)
+  (recurse (list list
+           accumulator 0)
+  (split list
+         (self tail (1+ accumulator))
+         accumulator)))
+
+(defun my-length (list)
+  (reduce (lambda (x i)
+            (1+ x))
+          list
+          :initial-value 0))
