@@ -151,3 +151,13 @@
       '(you cannot dunk like that.)))
 
 (pushnew 'dunk *allowed-commands*)
+
+(defmacro game-action (command subject object place &body body)
+  `(progn (defun ,command (subject object)
+            (if (and (eq *location* ',place)
+                     (eq subject ',subject)
+                     (eq object ',object)
+                     (have ',subject))
+                ,@body
+                '(i cannot ,command like that.)))
+          (pushnew ',command *allowed-commands*)))
