@@ -56,6 +56,15 @@
     (format t "The sum is ~a" x)
     x))
 
+;;Warning! Still contains a bug!
+(defmacro split (val yes no)
+  `(let1 x ,val
+     (if x
+         (let ((head (car x))
+               (tail (cdr x)))
+           ,yes)
+         ,no)))
+
 ;; This function is finally safe to use.
 (defmacro split (value yes no)
   (let1 g (gensym)
