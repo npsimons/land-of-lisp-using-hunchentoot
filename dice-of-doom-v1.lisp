@@ -48,7 +48,8 @@
   (if first-move
       moves
       (cons (list nil
-                  (game-tree (add-new-dice board player (1- spare-dice))
+                  (game-tree (add-new-dice board player
+                                           (1- spare-dice))
                              (mod (1+ player) *number-of-players*)
                              0
                              t))
@@ -59,23 +60,27 @@
              (car (aref board position)))
            (dice (position)
              (cadr (aref board position))))
-    (mapcan (lambda (source)
-              (when (eq (player source) current-player)
-                (mapcan (lambda (destination)
-                          (when (and (not (eq (player destination) current-player))
-                                     (> (dice source) (dice destination)))
-                            (list
-                             (list
-                              (list source destination)
-                              (game-tree
-                               (board-attack board current-player source destination
-                                             (dice source))
-                               current-player
-                               (+ spare-dice (dice destination))
-                               nil)))))
-                        (neighbors source))))
-            (loop for n below *board-hex-count*
-                 collect n))))
+    (mapcan
+     (lambda (source)
+       (when (eq (player source) current-player)
+         (mapcan
+          (lambda (destination)
+            (when (and (not (eq (player destination)
+                                current-player))
+                       (> (dice source) (dice destination)))
+              (list (list (list source destination)
+                          (game-tree
+                           (board-attack board
+                                         current-player
+                                         source
+                                         destination
+                                         (dice source))
+                           current-player
+                           (+ spare-dice (dice destination))
+                           nil)))))
+          (neighbors source))))
+     (loop for n below *board-hex-count*
+        collect n))))
 
 (defun neighbors (position)
   (let ((up (- position *board-length*))
@@ -222,4 +227,4 @@
         ((zerop (car tree)) (play-versus-computer (handle-human tree)))
         (t (play-versus-computer (handle-computer tree)))))
 
-(play-versus-computer (game-tree (generate-board) 0 0 t))
+;; (play-versus-computer (game-tree (generate-board) 0 0 t))
