@@ -67,3 +67,62 @@
   (if (not (lazy-null (caddr tree)))
       (play-versus-human (handle-human tree))
       (announce-winner (cadr tree))))
+
+(defun limit-tree-depth (tree depth)
+  (list (car tree)
+        (cadr tree)
+        (if (zerop depth)
+            (lazy-nil)
+            (lazy-mapcar (lambda (move)
+                           (list (car move)
+                                 (limit-tree-depth (cadr move) (1- depth))))
+                         (caddr tree)))))
+
+(defparameter *ai-level* 4)
+
+(defun handle-computer (tree)
+  (let ((ratings (get-ratings (limit-tree-depth tree *ai-level*)
+                              (car tree))))
+    (cadr (lazy-nth (position (apply #'max ratings) ratings)
+                    (caddr tree)))))
+
+(defun play-versus-computer (tree)
+  (print-info tree)
+  (cond ((lazy-null (caddr tree)) (announce-winner (cadr tree)))
+        ((zerop (car tree)) (play-versus-computer (handle-human tree)))
+        (t (play-versus-computer (handle-computer tree)))))
+
+(defun score-board (board player)
+  (loop for hex across board
+     for position from 0
+     sum (if (eq (car hex) player)
+             (if (threatened position board)
+                 1
+                 2)
+             -1)))
+
+(defun threatened (position board)
+  (let* ((hex (aref board position))
+         (player (car hex))
+         (dice (cadr hex)))
+    (loop for neighbor in (neighbors position)
+       do (let* ((neighboring-hex (aref board neighbor))
+                 (neighboring-player (car neighboring-hex))
+                 (neighboring-dice (cadr neighboring-hex)))
+            (when (and (not (eq player neighboring-player))
+                       (> neighboring-dice dice))
+              (return t))))))
+
+(defun get-ratings (tree player)
+  (take-all (lazy-mapcar (lambda (move)
+                           (rate-position (cadr move) player))
+                         (caddr tree))))
+
+(defun rate-position (tree player)
+  (let ((moves (caddr tree)))
+    (if (not (lazy-null moves))
+        (apply (if (eq (car tree) player)
+                   #'max
+                   #'min)
+               (get-ratings tree player))
+        (score-board (cadr tree) player))))
