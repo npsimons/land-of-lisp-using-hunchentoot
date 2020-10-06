@@ -1,7 +1,7 @@
 (load "dice-of-doom-v1.lisp")
 (load "lazy.lisp")
 
-(defparameter *board-length* 4)
+(defparameter *board-length* 5)
 (defparameter *board-hex-count* (* *board-length* *board-length*))
 
 (defun add-passing-move (board player spare-dice first-move moves)
@@ -126,3 +126,50 @@
                    #'min)
                (get-ratings tree player))
         (score-board (cadr tree) player))))
+
+(defun a-b-get-ratings-max (tree player upper-limit lower-limit)
+  (labels ((f (moves lower-limit)
+             (unless (lazy-null moves)
+               (let ((x (a-b-rate-position (cadr (lazy-car moves))
+                                           player
+                                           upper-limit
+                                           lower-limit)))
+                 (if (>= x upper-limit)
+                     (list x)
+                     (cons x (f (lazy-cdr moves) (max x lower-limit))))))))
+    (f (caddr tree) lower-limit)))
+
+(defun a-b-get-ratings-min (tree player upper-limit lower-limit)
+  (labels ((f (moves upper-limit)
+             (unless (lazy-null moves)
+               (let ((x (a-b-rate-position (cadr (lazy-car moves))
+                                           player
+                                           upper-limit
+                                           lower-limit)))
+                 (if (<= x lower-limit)
+                     (list x)
+                     (cons x (f (lazy-cdr moves) (min x upper-limit))))))))
+    (f (caddr tree) upper-limit)))
+
+(defun a-b-rate-position (tree player upper-limit lower-limit)
+  (let ((moves (caddr tree)))
+    (if (not (lazy-null moves))
+        (if (eq (car tree) player)
+            (apply #'max (a-b-get-ratings-max tree
+                                              player
+                                              upper-limit
+                                              lower-limit))
+            (apply #'min (a-b-get-ratings-min tree
+                                              player
+                                              upper-limit
+                                              lower-limit)))
+        (score-board (cadr tree) player))))
+
+(defun handle-computer (tree)
+  (let ((ratings (a-b-get-ratings-max (limit-tree-depth tree *ai-level*)
+                                      (car tree)
+                                      most-positive-fixnum
+                                      most-negative-fixnum)))
+    (cadr (lazy-nth (position (apply #'max ratings) ratings) (caddr tree)))))
+
+;; (play-versus-computer (game-tree (generate-board) 0 0 t))
