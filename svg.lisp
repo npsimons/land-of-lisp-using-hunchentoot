@@ -1,3 +1,16 @@
+(defmacro let1 (variable value &body body)
+  `(let ((,variable ,value))
+     ,@body))
+
+(defmacro split (value yes no)
+  (let1 g (gensym)
+    `(let1 ,g ,value
+       (if ,g
+           (let ((head (car ,g))
+                 (tail (cdr ,g)))
+             ,yes)
+           ,no))))
+
 (defun pairs (list)
   (labels ((f (list accumulator)
              (split list
