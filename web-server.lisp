@@ -78,6 +78,8 @@
 (defun hello-request-handler (path header parameters)
   (if (equal path "greeting")
       (let ((name (assoc 'name parameters)))
+        (format t "HTTP/1.1 200 OK")
+        (format t "Content-type: text/html; charset=UTF-8~%~%")
         (if (not name)
             (princ "<html><form>What . . . is your name?<input name='name' /></form></html>")
             (format t "<html>Nice to meet you, ~a!</html>" (cdr name))))
