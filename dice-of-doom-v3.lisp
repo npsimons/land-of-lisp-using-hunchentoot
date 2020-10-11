@@ -1,5 +1,11 @@
+;; (ql:quickload :hunchentoot)
+
+(require "asdf")
+(require "hunchentoot")
+(use-package :hunchentoot)
+
 (load "dice-of-doom-v2.lisp")
-(load "web-server.lisp")
+;; (load "web-server.lisp")
 (load "svg.lisp")
 
 (defparameter *board-width* 900)
@@ -73,28 +79,26 @@
 (defun make-game-link (position)
   (format nil "/game.html?chosen=~a" position))
 
-(defun dice-of-doom-request-handler (path header parameters)
-  (if (equal path "game.html")
-      (progn (format t "HTTP/1.1 200 OK")
-             (format t "Content-type: text/html; charset=UTF-8~%~%")
-             (princ "<!doctype html>")
-             (tag center ()
-               (princ "Welcome to DICE OF DOOM!")
-               (tag br ())
-               (let ((chosen (assoc 'chosen parameters)))
-                 (when (or (not *current-game-tree*) (not chosen))
-                   (setf chosen nil)
-                   (web-initialize))
-                 (cond ((lazy-null (caddr *current-game-tree*))
-                        (web-announce-winner (cadr *current-game-tree*)))
-                       ((zerop (car *current-game-tree*))
-                        (web-handle-human
-                         (when chosen
-                           (read-from-string (cdr chosen)))))
-                       (t (web-handle-computer))))
-               (tag br ())
-               (draw-dice-of-doom-page *current-game-tree* *from-tile*)))
-      (princ "Sorry, I don't know that page.")))
+(hunchentoot:define-easy-handler (game.html :uri "/game.html") (chosen)
+  (let* ((capture-output (make-string-output-stream))
+         (*standard-output* capture-output))
+    (princ "<!doctype html>")
+    (tag center ()
+      (princ "Welcome to DICE OF DOOM!")
+      (tag br ())
+      (when (or (not *current-game-tree*) (not chosen))
+        (setf chosen nil)
+        (web-initialize))
+      (cond ((lazy-null (caddr *current-game-tree*))
+             (web-announce-winner (cadr *current-game-tree*)))
+            ((zerop (car *current-game-tree*))
+             (web-handle-human
+              (when chosen
+                (read-from-string chosen))))
+            (t (web-handle-computer)))
+      (tag br ())
+      (draw-dice-of-doom-page *current-game-tree* *from-tile*))
+    (get-output-stream-string capture-output)))
 
 (defun web-initialize ()
   (setf *from-tile* nil)
@@ -151,3 +155,17 @@
                                        (cadar move)))
                                    (caddr tree))
                                   (lazy-mapcar #'caar (caddr tree)))))))
+ 
+;; Taken from
+;; https://stackoverflow.com/questions/19739527/how-do-i-start-hunchentoot
+(defvar *acceptor* nil)
+
+(defun start-server (port)
+  (stop-server)
+  (hunchentoot:start (setf *acceptor*
+                           (make-instance 'hunchentoot:easy-acceptor
+                                          :port port))))
+
+(defun stop-server ()
+  (when *acceptor*
+    (hunchentoot:stop *acceptor*)))

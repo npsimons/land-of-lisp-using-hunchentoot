@@ -35,9 +35,9 @@
                      (list ,@(mapcar (lambda (x)
                                        `(cons ',(car x) ,(cdr x)))
                                      (pairs attributes)))
-          nil)
-      ,@body
-      (print-tag ',name nil t)))
+                     nil)
+          ,@body
+          (print-tag ',name nil t)))
 
 (defmacro html (&body body)
   `(tag html ()
