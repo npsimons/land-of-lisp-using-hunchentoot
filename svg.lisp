@@ -39,6 +39,31 @@
           ,@body
           (print-tag ',name nil t)))
 
+(defun create-xml-attributes (dotted-pairs)
+  (loop for attribute
+     in dotted-pairs
+     collect (format nil "~a=\"~a\"" (string-downcase (car attribute)) (cdr attribute))))
+
+(defun format-tag (name attribute-list closingp)
+  (let ((template "<~:[~;/~]~a~{ ~a~}>"))
+    (format nil template closingp
+            (string-downcase name)
+            (create-xml-attributes attribute-list))))
+
+(defun print-tag (name attribute-list closingp)
+  (princ (format-tag name attribute-list closingp)))
+
+(defmacro tag (name attributes &body body)
+  `(progn (concatenate 'string
+                       (format-tag ',name
+                                   (list ,@(mapcar (lambda (x)
+                                                     `(cons ',(car x) ,(cdr x)))
+                                                   (pairs attributes)))
+                                   nil)
+                       ,@body
+                       (format-tag ',name nil t)
+                       )))
+
 (defmacro html (&body body)
   `(tag html ()
      ,@body))
