@@ -3,6 +3,7 @@
 
 (defparameter *board-length* 5)
 (defparameter *board-hex-count* (* *board-length* *board-length*))
+(defparameter *ai-level* 4)
 
 (defun add-passing-move (board player spare-dice first-move moves)
   (if first-move
@@ -16,33 +17,33 @@
                  moves)))
 
 (defun attacking-moves (board current-player spare-dice)
-  (labels ((player (position)
+  (labels ((player-at (position)
              (car (aref board position)))
            (dice (position)
              (cadr (aref board position))))
     (lazy-mapcan
      (lambda (source)
-       (if (eq (player source) current-player)
-         (lazy-mapcan
-          (lambda (destination)
-            (if (and (not (eq (player destination)
+       (if (eq (player-at source) current-player)
+           (lazy-mapcan
+            (lambda (destination)
+              (if (and (not (eq (player-at destination)
                                 current-player))
-                     (> (dice source) (dice destination)))
-                (make-lazy
-                 (list (list (list source destination)
-                             (game-tree (board-attack board
-                                                      current-player
-                                                      source
-                                                      destination
-                                                      (dice source))
-                                        current-player
-                                        (+ spare-dice (dice destination))
-                                        nil))))
-                (lazy-nil)))
-          (make-lazy (neighbors source)))
-         (lazy-nil)))
+                       (> (dice source) (dice destination)))
+                  (make-lazy
+                   (list (list (list source destination)
+                               (game-tree (board-attack board
+                                                        current-player
+                                                        source
+                                                        destination
+                                                        (dice source))
+                                          current-player
+                                          (+ spare-dice (dice destination))
+                                          nil))))
+                  (lazy-nil)))
+            (make-lazy (neighbors source)))
+           (lazy-nil)))
      (make-lazy (loop for n below *board-hex-count*
-        collect n)))))
+                   collect n)))))
 
 (defun handle-human (tree)
   (fresh-line)
@@ -77,8 +78,6 @@
                            (list (car move)
                                  (limit-tree-depth (cadr move) (1- depth))))
                          (caddr tree)))))
-
-(defparameter *ai-level* 4)
 
 (defun handle-computer (tree)
   (let ((ratings (get-ratings (limit-tree-depth tree *ai-level*)
