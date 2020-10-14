@@ -1,4 +1,4 @@
-# land-of-lisp-using-hunchentoot
+# "Land of Lisp" using Hunchentoot
 Convert code for "Dice of Doom" from "Land of Lisp" to use Hunchentoot web server for version 3 and 4.
 
 I recently went through "Land of Lisp" by Conrad Barski, a thoroughly enjoyable book! Unfortunately, I couldn't get the web server
@@ -18,6 +18,7 @@ handler.
 `Content-type` or `HTTP/1.1` header (which was missing in the original "Dice of Doom" code). This includes path and parameter parsing, so 
 `chosen` becomes a string if it's not `nil`.
 4. I shamelessly stole some convenience functions for starting and stopping Hunchentoot; link is in the comment above them.
+5. I also took the liberty of changing some ~~identifiers~~symbols. I believe in code readbility, touch type and use Emacs with `dabbrev-expand` religiously, so I see no reason to shorten names.
 
 The relevant change is [here](https://github.com/npsimons/land-of-lisp-using-hunchentoot/commit/7f58d230589dcdefdd1948160caca53ed1eb96c3).
 
